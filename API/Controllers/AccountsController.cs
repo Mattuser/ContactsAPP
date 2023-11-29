@@ -31,15 +31,26 @@ public class AccountsController : ControllerBase
     [HttpPost("/login")]
     public async Task<IActionResult> SignInAsync([FromBody] AccountLogin account)
     {
-        var response = await _authenticationService.SignIn(account);
-        if (response == null) 
-            return BadRequest(new { Message = "Not Found" });
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
 
-        if (string.IsNullOrEmpty(response.UserName) && string.IsNullOrEmpty(response.Email))
-            return BadRequest("You have entered an invalid username or password");
+        try
+        {
+            var response = await _authenticationService.SignIn(account);
+            if (response == null)
+                return NotFound(new { Message = "Not Found" });
 
-        return Ok(response);
+            if (string.IsNullOrEmpty(response.UserName) && string.IsNullOrEmpty(response.Email))
+                return BadRequest("You have entered an invalid username or password");
 
+            return Ok(response);
+        }
+        catch
+        {
+            return StatusCode(500, new { message = "Internal Server Error" });
+        }
     }
 
 }
